@@ -1,0 +1,5 @@
+.venv
+data
+output.db
+log.txt
+__pycache__
