@@ -70,7 +70,7 @@ def get_dt(date_string):
     fmt =  '%a, %d %b %Y %H:%M:%S %z'
     try:
         dt = datetime.strptime(date_string, fmt)
-    except (ValueError,v):
+    except ValueError as v:
         ulr = len(v.args[0].partition('unconverted data remains: ')[2])
         if ulr > 0:
             date_string = datetime.strptime(date_string[:-ulr], fmt)
