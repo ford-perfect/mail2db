@@ -66,10 +66,21 @@ def insert_message(session, msg, ffrom, to, cc, bcc, date, filepath):
             session.rollback()
             log_file.write(f"Duplicate entry for {msg.headers['Subject']} from {ffrom.email} on {date}")
 
+def get_dt(date_string):
+    fmt =  '%a, %d %b %Y %H:%M:%S %z'
+    try:
+        dt = datetime.strptime(date_string, fmt)
+    except (ValueError,v):
+        ulr = len(v.args[0].partition('unconverted data remains: ')[2])
+        if ulr > 0:
+            date_string = datetime.strptime(date_string[:-ulr], fmt)
+        else:
+            raise v
+    return dt
 def extract_headers(session, file_path):
     msg = emlx.read(file_path)
     date_string = msg.headers['Date']
-    dt = datetime.strptime(date_string, '%a, %d %b %Y %H:%M:%S %z')
+    dt = get_dt(date_string)
     subject = msg.headers['Subject']
     to = []
     cc = []
@@ -156,7 +167,7 @@ def main():
         progress_bar.desc = f"{'Starting'.ljust(max_path,' ')}"
         for sub in subs:
             #progress_bar.pos = i
-            time.sleep(2)
+            # time.sleep(2)
             progress_bar.unit = "Folder"
             sub_text = sub[len(data_path):] if sub.startswith(data_path) else sub
             progress_bar.desc = f"{sub_text.ljust(max_path,' ')}"
