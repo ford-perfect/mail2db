@@ -42,7 +42,10 @@ def insert_message(session, msg, subject, ffrom, to, cc, bcc, date, filepath):
     body = ''
     for part in msg.walk():
         if part.get_content_type() == 'text/plain':
-            body = part.get_payload(decode=True).decode(part.get_content_charset())
+            try:
+                body = part.get_payload(decode=True).decode(part.get_content_charset())
+            except:
+                body = part.get_payload(decode=True).decode('utf-8', errors='ignore')
             break
     e_message = Message(
         ffrom = ffrom.email,
