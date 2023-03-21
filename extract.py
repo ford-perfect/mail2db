@@ -85,15 +85,14 @@ def extract_headers(session, file_path):
                     email = match.group('email')
                 email = email.strip()
                 contact = insert_contact(session, name, email)
-                match header:
-                    case 'To':
-                        to.append(contact)
-                    case 'Cc':
-                        cc.append(contact)
-                    case 'Bcc':
-                        bcc.append(contact)
-                    case 'From':
-                        ffrom = contact
+                if(header == 'To'):
+                    to.append(contact)
+                elif header == 'Cc':
+                    cc.append(contact)
+                elif header == 'Bcc':
+                    bcc.append(contact)
+                elif header == 'From':
+                    ffrom = contact
     insert_message(session, msg, ffrom, to, cc, bcc, dt, file_path)
 
 
