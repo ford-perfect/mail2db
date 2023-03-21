@@ -66,7 +66,7 @@ def insert_message(session, msg, ffrom, to, cc, bcc, date, filepath):
             session.rollback()
             log_file.write(f"Duplicate entry for {msg.headers['Subject']} from {ffrom.email} on {date}")
 
-def get_dt(date_string):
+def get_dt(date_string, file_path):
     fmt =  '%a, %d %b %Y %H:%M:%S %z'
     dt = None
     try:
