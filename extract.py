@@ -79,15 +79,22 @@ def get_dt(date_string, file_path):
             else:
                 dt = datetime.now()
                 log_file.write(f"Could not parse date {date_string} for {file_path} using {fmt} so using {dt}, url = {ulr}")
-        except ValueError as w:
+        except:
                 dt = datetime.now()
                 log_file.write(f"Could not parse date {date_string} for {file_path} using {fmt} so using {dt}, second try")
     return dt
 def extract_headers(session, file_path):
     msg = emlx.read(file_path)
-    date_string = msg.headers['Date']
-    dt = get_dt(date_string, file_path)
-    subject = msg.headers['Subject']
+    try:
+        date_string = msg.headers['Date']
+        dt = get_dt(date_string, file_path)
+    except KeyError:
+        dt = datetime.now()
+        log_file.write(f"Could not find date for {file_path} so using {dt}")
+    try:
+        subject = msg.headers['Subject']
+    except KeyError:
+        subject = 'No Subject'
     to = []
     cc = []
     bcc = []
