@@ -52,7 +52,7 @@ def insert_message(session, msg, subject, ffrom, to, cc, bcc, date, filepath):
     else:
         from_email = ffrom.email
     e_message = Message(
-        ffrom = ffrom_email,
+        ffrom = from_email,
         subject = subject,
         body = body,
         date = date,
