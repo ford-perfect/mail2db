@@ -47,8 +47,12 @@ def insert_message(session, msg, subject, ffrom, to, cc, bcc, date, filepath):
             except:
                 body = part.get_payload(decode=True).decode('utf-8', errors='ignore')
             break
+    if ffrom is None:
+        from_email = None
+    else:
+        from_email = ffrom.email
     e_message = Message(
-        ffrom = ffrom.email,
+        ffrom = ffrom_email,
         subject = subject,
         body = body,
         date = date,
