@@ -68,19 +68,25 @@ def insert_message(session, msg, ffrom, to, cc, bcc, date, filepath):
 
 def get_dt(date_string):
     fmt =  '%a, %d %b %Y %H:%M:%S %z'
+    dt = None
     try:
         dt = datetime.strptime(date_string, fmt)
     except ValueError as v:
         ulr = len(v.args[0].partition('unconverted data remains: ')[2])
-        if ulr > 0:
-            date_string = datetime.strptime(date_string[:-ulr], fmt)
-        else:
-            raise v
+        try:
+            if ulr > 0:
+                dt = datetime.strptime(date_string[:-ulr], fmt)
+            else:
+                dt = datetime.now()
+                log_file.write(f"Could not parse date {date_string} for {file_path} using {fmt} so using {dt}, url = {ulr}")
+        except ValueError as w:
+                dt = datetime.now()
+                log_file.write(f"Could not parse date {date_string} for {file_path} using {fmt} so using {dt}, second try")
     return dt
 def extract_headers(session, file_path):
     msg = emlx.read(file_path)
     date_string = msg.headers['Date']
-    dt = get_dt(date_string)
+    dt = get_dt(date_string, file_path)
     subject = msg.headers['Subject']
     to = []
     cc = []
