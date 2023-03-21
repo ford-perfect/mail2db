@@ -156,9 +156,10 @@ def main():
         progress_bar.desc = f"{'Starting'.ljust(max_path,' ')}"
         for sub in subs:
             #progress_bar.pos = i
-            # time.sleep(2)
+            time.sleep(2)
             progress_bar.unit = "Folder"
-            progress_bar.desc = f"{sub.removeprefix(data_path).ljust(max_path,' ')}"
+            sub_text = sub[len(data_path):] if sub.startswith(data_path) else sub
+            progress_bar.desc = f"{sub_text.ljust(max_path,' ')}"
             progress_bar.update()
             walk_sub(sub, session)
         progress_bar.desc = f"{'Finished'.ljust(max_path,' ')}"
