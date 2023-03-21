@@ -38,7 +38,7 @@ def insert_contact(session, name, email):
         log_file.write(f"For {email}, previously known as {db_contact.name} is a.k.a. {name}")
     return db_contact
 
-def insert_message(session, msg, ffrom, to, cc, bcc, date, filepath):
+def insert_message(session, subject, ffrom, to, cc, bcc, date, filepath):
     body = ''
     for part in msg.walk():
         if part.get_content_type() == 'text/plain':
@@ -46,7 +46,7 @@ def insert_message(session, msg, ffrom, to, cc, bcc, date, filepath):
             break
     e_message = Message(
         ffrom = ffrom.email,
-        subject = msg.headers['Subject'],
+        subject = subject,
         body = body,
         date = date,
         filepath = filepath
