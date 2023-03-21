@@ -38,7 +38,7 @@ def insert_contact(session, name, email):
         log_file.write(f"For {email}, previously known as {db_contact.name} is a.k.a. {name}")
     return db_contact
 
-def insert_message(session, subject, ffrom, to, cc, bcc, date, filepath):
+def insert_message(session, msg, subject, ffrom, to, cc, bcc, date, filepath):
     body = ''
     for part in msg.walk():
         if part.get_content_type() == 'text/plain':
@@ -117,7 +117,7 @@ def extract_headers(session, file_path):
                     bcc.append(contact)
                 elif header == 'From':
                     ffrom = contact
-    insert_message(session, msg, ffrom, to, cc, bcc, dt, file_path)
+    insert_message(session, msg, subject, ffrom, to, cc, bcc, dt, file_path)
 
 
 def write_to_csv(file_name):
