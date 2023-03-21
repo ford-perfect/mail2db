@@ -6,28 +6,39 @@ import csv
 import re
 import email
 #import pymysql
+#
 from datetime import datetime
-from model import Contact, Message, PromptQuestions, Question, Base
+from model import Contact, Message, PromptQuestions, Question, Base, EmailFolder
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy import exc as sa_exc
 import tqdm
 
+import warnings
 people  = {}
 log_file = open('log.txt', 'w')
 header_regex = re.compile(r'^(?P<name>[^<]*)<(?P<email>[^>]*)>$')
 
 def insert_contact(session, name, email):
-    db_contact = session.query(Contact).filter_by(email=email).first()
-    if not db_contact:
-        db_contact = Contact(name=name, email=email)
-        session.add(db_contact)
-        session.commit()
-        return db_contact
-    elif db_contact.name != name:
+    # db_contact = session.query(Contact).filter_by(email=email).first()
+    # if not db_contact:
+    db_contact = Contact(name=name, email=email)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+        try:
+            session.add(db_contact)
+            session.commit()
+        except sa_exc.IntegrityError:
+            session.rollback()
+            db_contact = session.query(Contact).filter_by(email=email).first()
+            log_file.write(f"Duplicate entry for {email} with name {name} and {db_contact.name}")
+    return db_contact
+    if db_contact.name != name:
         log_file.write(f"For {email}, previously known as {db_contact.name} is a.k.a. {name}")
     return db_contact
 
-def insert_message(session, msg, ffrom, to, cc, bcc, date):
+def insert_message(session, msg, ffrom, to, cc, bcc, date, filepath):
     body = ''
     for part in msg.walk():
         if part.get_content_type() == 'text/plain':
@@ -37,7 +48,8 @@ def insert_message(session, msg, ffrom, to, cc, bcc, date):
         ffrom = ffrom.email,
         subject = msg.headers['Subject'],
         body = body,
-        date = date
+        date = date,
+        filepath = filepath
     )
     for contact in to:
         e_message.to.append(contact)
@@ -45,8 +57,14 @@ def insert_message(session, msg, ffrom, to, cc, bcc, date):
         e_message.cc.append(contact)
     for contact in bcc:
         e_message.bcc.append(contact)
-    session.add(e_message)
-    session.commit()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+        try:
+            session.add(e_message)
+            session.commit()
+        except sa_exc.IntegrityError:
+            session.rollback()
+            log_file.write(f"Duplicate entry for {msg.headers['Subject']} from {ffrom.email} on {date}")
 
 def extract_headers(session, file_path):
     msg = emlx.read(file_path)
@@ -76,7 +94,7 @@ def extract_headers(session, file_path):
                         bcc.append(contact)
                     case 'From':
                         ffrom = contact
-    insert_message(session, msg, ffrom, to, cc, bcc, dt)
+    insert_message(session, msg, ffrom, to, cc, bcc, dt, file_path)
 
 
 def write_to_csv(file_name):
@@ -98,11 +116,23 @@ def write_to_csv(file_name):
         for row in data:
             writer.writerow(row)
 def walk_sub(sub, session):
+
+    emailFolder = session.query(EmailFolder).filter_by(sub=sub).first()
+    if not emailFolder:
+        emailFolder = EmailFolder(sub=sub)
+        session.add(emailFolder)
+        session.commit()
+    if emailFolder.processed:
+        return
+
     for root, dirs, files in os.walk(sub):
         for file in files:
             if file.endswith('.emlx') and not re.match(r"\._.*$", file):
                 file_path = os.path.join(root, file)
                 headers = extract_headers(session, file_path)
+    emailFolder = session.query(EmailFolder).filter_by(sub=sub).first()
+    emailFolder.processed = True
+    session.commit()
 
 def main():
     engine  = create_engine('sqlite:///output.db')
@@ -127,7 +157,7 @@ def main():
         progress_bar.desc = f"{'Starting'.ljust(max_path,' ')}"
         for sub in subs:
             #progress_bar.pos = i
-            time.sleep(2)
+            # time.sleep(2)
             progress_bar.unit = "Folder"
             progress_bar.desc = f"{sub.removeprefix(data_path).ljust(max_path,' ')}"
             progress_bar.update()
