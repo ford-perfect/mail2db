@@ -6,7 +6,7 @@ Base = declarative_base()
 
 
 to = Table('to', Base.metadata,
-           Column('contact_id', String(50), ForeignKey('contact.email')),
+    Column('contact_id', String(50), ForeignKey('contact.email')),
     Column('message_id', Integer, ForeignKey('message.id'))
 )
 cc = Table('cc', Base.metadata,
